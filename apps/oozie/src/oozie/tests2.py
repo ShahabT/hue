@@ -27,7 +27,7 @@ from nose.tools import assert_true, assert_false, assert_equal, assert_not_equal
 
 from desktop.lib.django_test_util import make_logged_in_client
 from desktop.lib.test_utils import add_permission, add_to_group, grant_access, remove_from_group
-from desktop.models import DefaultConfiguration, Document2
+from desktop.models import DefaultConfiguration, Document, Document2
 
 from oozie.conf import ENABLE_V2
 from oozie.importlib.workflows import generate_v2_graph_nodes
@@ -307,22 +307,16 @@ LIMIT $limit"""))
     assert_true('bundles_json' in response.context, response.context)
 
   def test_workflow_dependencies(self):
-    wf_doc1 = save_temp_workflow(MockOozieApi.JSON_WORKFLOW_LIST[5], self.user)
+    wf_data = """{"layout": [{"oozieRows": [{"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "Sub workflow", "widgetType": "subworkflow-widget", "oozieMovable": true, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "9a24c7b1-b031-15d6-4086-e8af63be7ed4", "size": 12}], "id": "a566315f-e0e0-f408-fabd-c4576cc4041d", "columns": []}], "rows": [{"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "Start", "widgetType": "start-widget", "oozieMovable": false, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "3f107997-04cc-8733-60a9-a4bb62cebffc", "size": 12}], "id": "ec1fbd7f-ff6c-95eb-a865-ed3a3a00fc59", "columns": []}, {"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "Sub workflow", "widgetType": "subworkflow-widget", "oozieMovable": true, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "9a24c7b1-b031-15d6-4086-e8af63be7ed4", "size": 12}], "id": "a566315f-e0e0-f408-fabd-c4576cc4041d", "columns": []}, {"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "End", "widgetType": "end-widget", "oozieMovable": false, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "33430f0f-ebfa-c3ec-f237-3e77efa03d0a", "size": 12}], "id": "cd1a181a-9db0-c295-78e4-4d67ecedd057", "columns": []}, {"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "Kill", "widgetType": "kill-widget", "oozieMovable": true, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "17c9c895-5a16-7443-bb81-f34b30b21548", "size": 12}], "id": "caf2a089-c5d2-4a55-5b90-2a691be25884", "columns": []}], "oozieEndRow": {"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "End", "widgetType": "end-widget", "oozieMovable": false, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "33430f0f-ebfa-c3ec-f237-3e77efa03d0a", "size": 12}], "id": "cd1a181a-9db0-c295-78e4-4d67ecedd057", "columns": []}, "oozieKillRow": {"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "Kill", "widgetType": "kill-widget", "oozieMovable": true, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "17c9c895-5a16-7443-bb81-f34b30b21548", "size": 12}], "id": "caf2a089-c5d2-4a55-5b90-2a691be25884", "columns": []}, "enableOozieDropOnAfter": true, "oozieStartRow": {"enableOozieDropOnBefore": true, "enableOozieDropOnSide": true, "enableOozieDrop": false, "widgets": [{"status": "", "logsURL": "", "name": "Start", "widgetType": "start-widget", "oozieMovable": false, "ooziePropertiesExpanded": false, "externalIdUrl": "", "properties": {}, "isLoading": true, "offset": 0, "actionURL": "", "progress": 0, "klass": "card card-widget span12", "oozieExpanded": false, "id": "3f107997-04cc-8733-60a9-a4bb62cebffc", "size": 12}], "id": "ec1fbd7f-ff6c-95eb-a865-ed3a3a00fc59", "columns": []}, "klass": "card card-home card-column span12", "enableOozieDropOnBefore": true, "drops": ["temp"], "id": "f162ea58-e396-9703-c2b4-329bad4c9fa9", "size": 12}], "workflow": {"properties": {"job_xml": "", "description": "", "parameters": [{"name": "oozie.use.system.libpath", "value": true}], "sla_enabled": false, "deployment_dir": "/user/hue/oozie/workspaces/hue-oozie-1462236042.61", "schema_version": "uri:oozie:workflow:0.5", "sla": [{"value": false, "key": "enabled"}, {"value": "${nominal_time}", "key": "nominal-time"}, {"value": "", "key": "should-start"}, {"value": "${30 * MINUTES}", "key": "should-end"}, {"value": "", "key": "max-duration"}, {"value": "", "key": "alert-events"}, {"value": "", "key": "alert-contact"}, {"value": "", "key": "notification-msg"}, {"value": "", "key": "upstream-apps"}], "show_arrows": true, "wf1_id": null, "properties": []}, "name": "test-sub", "versions": ["uri:oozie:workflow:0.4", "uri:oozie:workflow:0.4.5", "uri:oozie:workflow:0.5"], "isDirty": true, "movedNode": null, "linkMapping": {"17c9c895-5a16-7443-bb81-f34b30b21548": [], "33430f0f-ebfa-c3ec-f237-3e77efa03d0a": [], "9a24c7b1-b031-15d6-4086-e8af63be7ed4": ["33430f0f-ebfa-c3ec-f237-3e77efa03d0a"], "3f107997-04cc-8733-60a9-a4bb62cebffc": ["9a24c7b1-b031-15d6-4086-e8af63be7ed4"]}, "nodeIds": ["3f107997-04cc-8733-60a9-a4bb62cebffc", "33430f0f-ebfa-c3ec-f237-3e77efa03d0a", "17c9c895-5a16-7443-bb81-f34b30b21548", "9a24c7b1-b031-15d6-4086-e8af63be7ed4"], "nodes": [{"properties": {"uuid": "7705a9dd-164e-67eb-8758-2573800c86e1", "workflow": "7705a9dd-164e-67eb-8758-2573800c86e6", "retry_interval": [], "retry_max": [], "job_properties": [], "credentials": [], "propagate_configuration": true, "sla": [{"key": "enabled", "value": false}, {"key": "nominal-time", "value": "${nominal_time}"}, {"key": "should-start", "value": ""}, {"key": "should-end", "value": "${30 * MINUTES}"}, {"key": "max-duration", "value": ""}, {"key": "alert-events", "value": ""}, {"key": "alert-contact", "value": ""}, {"key": "notification-msg", "value": ""}, {"key": "upstream-apps", "value": ""}]}, "name": "hive-sql", "children": [{"to": "33430f0f-ebfa-c3ec-f237-3e77efa03d0a"}, {"error": "17c9c895-5a16-7443-bb81-f34b30b21548"}], "actionParametersFetched": false, "type": "hive-document-widget", "id": "9a24c7b1-b031-15d6-4086-e8af63be7ed3", "actionParameters": []}, {"properties": {}, "name": "Start", "children": [{"to": "9a24c7b1-b031-15d6-4086-e8af63be7ed4"}], "actionParametersFetched": false, "type": "start-widget", "id": "3f107997-04cc-8733-60a9-a4bb62cebffc", "actionParameters": []}, {"properties": {}, "name": "End", "children": [], "actionParametersFetched": false, "type": "end-widget", "id": "33430f0f-ebfa-c3ec-f237-3e77efa03d0a", "actionParameters": []}, {"properties": {"body": "", "cc": "", "to": "", "enableMail": false, "message": "Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]", "subject": ""}, "name": "Kill", "children": [], "actionParametersFetched": false, "type": "kill-widget", "id": "17c9c895-5a16-7443-bb81-f34b30b21548", "actionParameters": []}, {"properties": {"workflow": "7705a9dd-164e-67eb-8758-2573800c86e5", "retry_interval": [], "retry_max": [], "job_properties": [], "credentials": [], "propagate_configuration": true, "sla": [{"value": false, "key": "enabled"}, {"value": "${nominal_time}", "key": "nominal-time"}, {"value": "", "key": "should-start"}, {"value": "${30 * MINUTES}", "key": "should-end"}, {"value": "", "key": "max-duration"}, {"value": "", "key": "alert-events"}, {"value": "", "key": "alert-contact"}, {"value": "", "key": "notification-msg"}, {"value": "", "key": "upstream-apps"}]}, "name": "subworkflow-9a24", "children": [{"to": "33430f0f-ebfa-c3ec-f237-3e77efa03d0a"}, {"error": "17c9c895-5a16-7443-bb81-f34b30b21548"}], "actionParametersFetched": false, "type": "subworkflow-widget", "id": "9a24c7b1-b031-15d6-4086-e8af63be7ed4", "actionParameters": []}], "id": null, "nodeNamesMapping": {"17c9c895-5a16-7443-bb81-f34b30b21548": "Kill", "33430f0f-ebfa-c3ec-f237-3e77efa03d0a": "End", "9a24c7b1-b031-15d6-4086-e8af63be7ed4": "subworkflow-9a24", "3f107997-04cc-8733-60a9-a4bb62cebffc": "Start"}, "uuid": "73c6219d-272f-db98-3cd9-d413ea2625ac"}}"""
+    wf_doc1 = Document2.objects.create(name='test', type='oozie-workflow2', owner=self.user, data=wf_data)
+    Document.objects.link(wf_doc1, owner=wf_doc1.owner, name=wf_doc1.name, description=wf_doc1.description, extra='workflow2')
 
     # Add history dependency
     wf_doc1.is_history = True
     wf_doc1.dependencies.add(wf_doc1)
 
-    # Add sub-workflow dependency
-    wf_doc2 = save_temp_workflow(MockOozieApi.JSON_WORKFLOW_LIST[4], self.user)
-    wf_doc1.dependencies.add(wf_doc2)
-
-    # Add Hive query dependency
-    query_doc = Document2.objects.create(name='Hive SQL', type='query-hive', owner=self.user)
-    wf_doc1.dependencies.add(query_doc)
-
     # Add coordinator dependency
-    data = {
+    coord_data = {
           'id': None,
           'uuid': None,
           'name': 'My Coordinator',
@@ -353,23 +347,39 @@ LIMIT $limit"""))
               'sla': WorkflowConfiguration.SLA_DEFAULT
           }
       }
-    wf_doc3 = Document2.objects.create(name='test', type='oozie-coordinator2', owner=User.objects.get(username='test'), data=data)
-    wf_doc1.dependencies.add(wf_doc3)
+    wf_doc2 = Document2.objects.create(name='test', type='oozie-coordinator2', owner=wf_doc1.owner, data=coord_data)
+    wf_doc1.dependencies.add(wf_doc2)
+    wf_doc1.save()
 
-    assert_true(len(wf_doc1.dependencies.all()) == 4)
+    workflow_data = json.loads(wf_data)['workflow']
+    layout_data = json.loads(wf_data)['layout']
 
-    wf_doc1.save() # TODO test is actually not testing, we would need to call the save view of a workflow
+    # Add query doc to Doc2
+    hive_node_props = [node['properties'] for node in workflow_data['nodes'] if node['type'] == 'hive-document-widget'][0]
+    query_doc = Document2.objects.create(name='test', uuid=hive_node_props['uuid'], type='query-hive', owner=wf_doc1.owner, description='test')
+
+    # Add subworkflow doc to Doc2
+    subworkflow_node_props = [node['properties'] for node in workflow_data['nodes'] if node['type'] == 'subworkflow-widget'][0]
+    subworkflow_doc = Document2.objects.create(name='test', uuid=subworkflow_node_props['workflow'], type='oozie-workflow2', owner=wf_doc1.owner, description='test')
+
+    workflow_data['id'] = wf_doc1.id
+    response = self.c.post(reverse('oozie:save_workflow'), {'workflow': json.dumps(workflow_data), 'layout': json.dumps(layout_data)})
+    response = json.loads(response.content)
+
+    assert_true(response['status'] == 0)
+    workflow_doc = Document2.objects.get(id=response['id'])
 
     # Validating dependencies after saving the workflow
-    assert_true(len(wf_doc1.dependencies.all()) == 4)
-    assert_true(len(wf_doc1.dependencies.filter(type='oozie-coordinator2')) > 0)
-    assert_equal(wf_doc1.dependencies.filter(type='query-hive').count(), 1)
-    assert_true(len(wf_doc1.dependencies.filter(Q(is_history=False) & Q(type='oozie-workflow2'))) > 0)
-    assert_true(len(wf_doc1.dependencies.filter(Q(is_history=True) & Q(type='oozie-workflow2'))) > 0)
+    assert_equal(workflow_doc.dependencies.all().count(), 4)
+    assert_equal(workflow_doc.dependencies.filter(type='oozie-coordinator2').count(), 1)
+    assert_equal(workflow_doc.dependencies.filter(type='query-hive').count(), 1)
+    assert_equal((workflow_doc.dependencies.filter(Q(is_history=False) & Q(type='oozie-workflow2'))).count(), 1)
+    assert_equal((workflow_doc.dependencies.filter(Q(is_history=True) & Q(type='oozie-workflow2'))).count(), 1)
 
     wf_doc1.delete()
     wf_doc2.delete()
-    wf_doc3.delete()
+    workflow_doc.delete()
+    subworkflow_doc.delete()
     query_doc.delete()
 
   def test_editor_access_permissions(self):
@@ -664,7 +674,7 @@ class TestExternalWorkflowGraph(object):
     assert_equal(workflow_data['layout'][0]['rows'][1]['widgets'][0]['widgetType'], 'fork-widget')
     assert_equal(workflow_data['workflow']['nodes'][0]['name'], 'start-3f10')
 
-  def test_gen_workflow_data_for_email(self):
+  def test_gen_workflow_data_from_xml_for_email(self):
     self.wf.definition = """<workflow-app name="My_Workflow" xmlns="uri:oozie:workflow:0.5">
         <start to="email-0377"/>
         <kill name="Kill">
@@ -690,3 +700,96 @@ class TestExternalWorkflowGraph(object):
     assert_true(len(workflow_data['workflow']['nodes']) == 4)
     assert_equal(workflow_data['layout'][0]['rows'][1]['widgets'][0]['widgetType'], 'email-widget')
     assert_equal(workflow_data['workflow']['nodes'][0]['name'], 'start-3f10')
+
+  def test_gen_workflow_data_from_xml_for_decision_node(self):
+    self.wf.definition = """<workflow-app xmlns="uri:oozie:workflow:0.5" name="capture-output-wf">
+      <credentials>
+        <credential name="hive2" type="hive2">
+          <property>
+            <name>hive2.jdbc.url</name>
+            <value>jdbc:hive2://huetest-1.gce.cloudera.com:10000/default</value>
+          </property>
+          <property>
+            <name>hive2.server.principal</name>
+            <value>hive/huetest-1.gce.cloudera.com@GCE.CLOUDERA.COM</value>
+          </property>
+        </credential>
+      </credentials>
+
+        <start to="fork1"/>
+
+        <fork name="fork1">
+            <path start="capture-shell"/>
+            <path start="hive-node"/>
+        </fork>
+        <action name="capture-shell">
+            <shell xmlns="uri:oozie:shell-action:0.1">
+                <job-tracker>${jobTracker}</job-tracker>
+                <name-node>${nameNode}</name-node>
+                <exec>capture-shell.sh</exec>
+                <file>capture-shell.sh#capture-shell.sh</file>
+                <capture-output/>
+            </shell>
+            <ok to="join1"/>
+            <error to="fail"/>
+        </action>
+        <action name="hive-node" cred="hive2">
+            <hive2 xmlns="uri:oozie:hive2-action:0.1">
+                <job-tracker>${jobTracker}</job-tracker>
+                <name-node>${nameNode}</name-node>
+                <jdbc-url>jdbc:hive2://huetest-1.gce.cloudera.com:10000/default</jdbc-url>
+                <script>/user/cconner/chris1.sql</script>
+            </hive2>
+            <ok to="join1"/>
+            <error to="fail"/>
+        </action>
+
+        <join name="join1" to="email1"/>
+
+        <action name="email1">
+            <email xmlns="uri:oozie:email-action:0.1">
+                <to>oozie@admin1.sec.cloudera.com</to>
+                <subject>capture output workflow</subject>
+                <body>yay</body>
+            </email>
+            <ok to="java-decision"/>
+            <error to="fail"/>
+        </action>
+
+        <action name='java-decision'>
+            <java>
+                <job-tracker>${jobTracker}</job-tracker>
+                <name-node>${nameNode}</name-node>
+                <configuration>
+                    <property>
+                        <name>mapred.job.queue.name</name>
+                        <value>${queueName}</value>
+                    </property>
+                </configuration>
+                <main-class>com.test.CurrentTime</main-class>
+                <capture-output/>
+            </java>
+            <ok to="java-decision1" />
+            <error to="fail" />
+        </action>
+        <decision name="java-decision1">
+               <switch>
+               <case to="end">${(wf:actionData('java-decision')['key1'] == "true")}</case>
+               <default to="fail" />
+               </switch>
+        </decision>
+
+        <kill name="fail">
+            <message>Hive failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+        </kill>
+        <end name="end"/>
+    </workflow-app>
+    """
+
+    workflow_data = Workflow.gen_workflow_data_from_xml(self.user, self.wf)
+
+    assert_true(len(workflow_data['layout'][0]['rows']) == 10)
+    assert_true(len(workflow_data['workflow']['nodes']) == 10)
+    assert_equal(workflow_data['layout'][0]['rows'][6]['widgets'][0]['widgetType'], 'decision-widget')
+    assert_equal(workflow_data['workflow']['nodes'][7]['type'], 'decision-widget')
+    assert_true(len(workflow_data['workflow']['nodes'][7]['children']) == 2)

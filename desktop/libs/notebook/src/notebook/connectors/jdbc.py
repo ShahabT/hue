@@ -86,13 +86,16 @@ class JdbcApi(Api):
     if self.db is None:
       raise AuthenticationRequired()
 
-    data, description = query_and_fetch(self.db, snippet['statement'], 1000)
+    data, description, log, start_time, end_time = query_and_fetch(self.db, snippet['statement'], 1000)
     has_result_set = data is not None
-
+      
     return {
       'sync': True,
       'has_result_set': has_result_set,
       'result': {
+        'log': log,
+        'startTime': start_time,
+        'endTime': end_time,
         'has_more': False,
         'data': data if has_result_set else [],
         'meta': [{
@@ -176,6 +179,8 @@ class JdbcApi(Api):
   def cache_key(self):
     return '%s-%s' % (self.interpreter['name'], self.user.username)
 
+  def get_log(self, notebook, snippet, startFrom=None, size=None):
+    return snippet['result']['handle']['result']['log']
 
 class Assist():
 

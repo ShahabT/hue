@@ -59,12 +59,21 @@ nv.models.growingDiscreteBar = function() {
       var availableWidth = width - margin.left - margin.right,
           availableHeight = height - margin.top - margin.bottom,
           container = d3.select(this);
+	var seriesCount = 0;
 
 
       //add series index to each data point for reference
       data.forEach(function(series, i) {
-        series.values.forEach(function(point) {
-          point.series = i;
+	var isError = i>0 && series.key.startsWith("error_");
+	if(!isError)
+	  seriesCount+= 1;
+        series.values.forEach(function(point, index) {
+          point.series = seriesCount-1;
+	  point.error = isError;
+	if(isError){
+	  point.val = data[i-1].values[index];
+	  data[i-1].values[index].err = point;
+	}
         });
       });
 
@@ -76,7 +85,7 @@ nv.models.growingDiscreteBar = function() {
       var seriesData = (xDomain && yDomain) ? [] : // if we know xDomain and yDomain, no need to calculate
             data.map(function(d) {
               return d.values.map(function(d,i) {
-                return { x: getX(d,i), y: getY(d,i), y0: d.y0 }
+                return { x: getX(d,i), y: d.error?d.y+d.val.y:(d.err?d.y-d.err.y:getY(d,i)), y0: d.y0 }
               })
             });
 
@@ -159,12 +168,12 @@ nv.models.growingDiscreteBar = function() {
               value: getY(d,i),
               point: d,
               series: data[d.series],
-              pos: [x(getX(d,i)) + (x.rangeBand() * (d.series + .5) / data.length), y(getY(d,i))],  // TODO: Figure out why the value appears to be shifted
+              pos: [x(getX(d,i)) + (x.rangeBand() * (d.series + .5) / seriesCount), y(getY(d,i))],  // TODO: Figure out why the value appears to be shifted
               pointIndex: i,
               seriesIndex: d.series,
               e: d3.event
             });
-          })
+        })
           .on('mouseout', function(d,i) {
             d3.select(this).classed('hover', false);
             dispatch.elementMouseout({
@@ -181,7 +190,7 @@ nv.models.growingDiscreteBar = function() {
               value: getY(d,i),
               point: d,
               series: data[d.series],
-              pos: [x(getX(d,i)) + (x.rangeBand() * (d.series + .5) / data.length), y(getY(d,i))],  // TODO: Figure out why the value appears to be shifted
+              pos: [x(getX(d,i)) + (x.rangeBand() * (d.series + .5) / seriesCount), y(getY(d,i))],  // TODO: Figure out why the value appears to be shifted
               pointIndex: i,
               seriesIndex: d.series,
               e: d3.event
@@ -193,7 +202,7 @@ nv.models.growingDiscreteBar = function() {
               value: getY(d,i),
               point: d,
               series: data[d.series],
-              pos: [x(getX(d,i)) + (x.rangeBand() * (d.series + .5) / data.length), y(getY(d,i))],  // TODO: Figure out why the value appears to be shifted
+              pos: [x(getX(d,i)) + (x.rangeBand() * (d.series + .5) / seriesCount), y(getY(d,i))],  // TODO: Figure out why the value appears to be shifted
               pointIndex: i,
               seriesIndex: d.series,
               e: d3.event
@@ -204,9 +213,12 @@ nv.models.growingDiscreteBar = function() {
       barsEnter.append('rect')
           .attr('height', 0)
           .attr('x', function(d,i,j) {
-              return (j * x.rangeBand() / data.length )
+              return (j * x.rangeBand() / seriesCount )
           })
-          .attr('width', (x.rangeBand() / data.length) )
+          .attr('width', (x.rangeBand() / seriesCount) )
+      
+	barsEnter.append("line").attr("class", "verdict-up-error");
+	barsEnter.append("line").attr("class", "verdict-down-error");
 
       if (showValues) {
         barsEnter.append('text')
@@ -217,7 +229,7 @@ nv.models.growingDiscreteBar = function() {
           .text(function(d,i) { return valueFormat(getY(d,i)) })
           .transition()
           .attr('x', function(d,i,j) {
-			      return (j * x.rangeBand() / data.length ) + (x.rangeBand() * .9 / data.length)/2
+			      return (j * x.rangeBand() / seriesCount ) + (x.rangeBand() * .9 / seriesCount)/2
           })
           .attr('y', function(d,i) { return getY(d,i) < 0 ? y(getY(d,i)) - y(0) + 12 : -4 })
 
@@ -227,20 +239,24 @@ nv.models.growingDiscreteBar = function() {
       }
 
       bars
-          .attr('class', function(d,i) { return getY(d,i) < 0 ? 'nv-bar negative' : 'nv-bar positive' })
-          .style('fill', function(d,i) { return d.color || color(d,i) })
+          .attr('class', function(d,i) { return (d.error?"verdict-error-bar ":"") + (getY(d,i) < 0 ? 'nv-bar negative' : 'nv-bar positive')})
+          .style('fill', function(d,i) { if(d.error) return "black"; else return d.color || color(d,i) })
           .style('stroke', function(d,i) { return d.color || color(d,i) })
         .select('rect')
           .attr('class', rectClass)
           .transition()
           .attr('x', function(d,i) {
-              return d.series * x.rangeBand() / data.length
+              return (d.error? d.series + .45 : d.series) * x.rangeBand() / seriesCount
             })
-            .attr('width', (x.rangeBand() / data.length) * 0.9)
+            .attr('width', function(d,i){return d.error ? 2 : (x.rangeBand() / seriesCount) * 0.9})
       bars.transition()
           .attr('transform', function(d,i) {
             var left = x(getX(d,i)) + x.rangeBand() * .05,
-                top = getY(d,i) < 0 ?
+                top;
+	    if(d.error)
+		top = y(d.val.y + d.y);
+	     else 
+		top = getY(d,i) < 0 ?
                         y(0) :
                         y(0) - y(getY(d,i)) < 1 ?
                           y(0) - 1 : //make 1 px positive bars show up above y=0
@@ -250,10 +266,14 @@ nv.models.growingDiscreteBar = function() {
           })
         .select('rect')
           .attr('height', function(d,i) {
-            return  Math.max(Math.abs(y(getY(d,i)) - y((yDomain && yDomain[0]) || 0)) || 1)
+            var h = Math.abs(y(getY(d,i)) - y((yDomain && yDomain[0]) || 0));
+	    if(d.error)
+		return h*2;
+	    return Math.max(h,1);
           });
 
-
+      bars.select(".verdict-error-bar .verdict-up-error").attr("x1", function(d,i){return (d.series + .45) * x.rangeBand() / seriesCount-6}).attr("x2", function(d,i){return (d.series + .45) * x.rangeBand() / seriesCount+8}).attr("y1", 0).attr("y2",0).style("stroke-width","2px").style("stroke", "black")
+bars.select(".verdict-error-bar .verdict-down-error").attr("x1", function(d,i){return (d.series + .45) * x.rangeBand() / seriesCount-6}).attr("x2", function(d,i){return (d.series + .45) * x.rangeBand() / seriesCount+8}).attr("y1", function(d,i){return 2*Math.abs(y(getY(d,i)) - y((yDomain && yDomain[0]) || 0))}).attr("y2",function(d,i){return 2*Math.abs(y(getY(d,i)) - y((yDomain && yDomain[0]) || 0))}).style("stroke-width","2px").style("stroke", "black")
       //store old scales for use in transitions on update
       x0 = x.copy();
       y0 = y.copy();

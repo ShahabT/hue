@@ -17,7 +17,7 @@
 
 import logging
 import sys
-
+import datetime
 
 LOG = logging.getLogger(__name__)
 
@@ -35,14 +35,22 @@ def query_and_fetch(db, statement, n=None):
     curs = db.cursor()
 
     try:
-      if curs.execute(statement):
+      stmts = [stmt+";" for stmt in statement.split(";") if stmt]
+      for stmt in stmts[:-1]:
+        curs.execute(stmt)
+      start_time = datetime.datetime.now()
+      has_data = curs.execute(stmts[-1])
+      end_time = datetime.datetime.now()
+      if has_data:
         data = curs.fetchmany(n)
       meta = curs.description
-      return data, meta
+      log = curs.log
+      return data, meta, log, start_time, end_time
     finally:
       curs.close()
   finally:
-    db.close()
+    pass
+    #db.close()
 
 
 class Jdbc():
@@ -50,8 +58,8 @@ class Jdbc():
   def __init__(self, driver_name, url, username, password):
     if 'py4j' not in sys.modules:
       raise Exception('Required py4j module is not imported.')
-
-    self.gateway = JavaGateway()
+    import os
+    self.gateway = JavaGateway.launch_gateway(classpath=os.environ['CLASSPATH'])
 
     self.jdbc_driver = driver_name
     self.db_url = url
@@ -59,9 +67,11 @@ class Jdbc():
     self.password = password
 
     self.conn = None
+    self.connect()
 
   def connect(self):
     if self.conn is None:
+      self.gateway.jvm.Class.forName(self.jdbc_driver)
       self.conn = self.gateway.jvm.java.sql.DriverManager.getConnection(self.db_url, self.username, self.password)
 
   def cursor(self):
@@ -72,6 +82,13 @@ class Jdbc():
       self.conn.close()
       self.conn = None
 
+
+def fix_type(type_name):
+  if type_name[0:4]=="SQL_":
+    return type_name[4:]+"_TYPE"
+  if type_name.__len__()<6 or type_name[-5:]!="_TYPE":
+    return type_name+"_TYPE"
+  return type_name
 
 class Cursor():
   """Similar to DB-API 2.0 Cursor interface"""
@@ -122,13 +139,22 @@ class Cursor():
     else:
       return [[
         self._meta.getColumnName(i),
-        self._meta.getColumnTypeName(i),
+        fix_type(self._meta.getColumnTypeName(i)),
         self._meta.getColumnDisplaySize(i),
         self._meta.getColumnDisplaySize(i),
         self._meta.getPrecision(i),
         self._meta.getScale(i),
         self._meta.isNullable(i),
       ] for i in xrange(1, self._meta.getColumnCount() + 1)]
+  
+  @property
+  def log(self):
+    if not self.rs:
+      return "No Logs."
+    try:
+      return self.rs.getApproximationInfo()
+    except:
+      return "No Logs."
 
   def close(self):
     self._meta = None

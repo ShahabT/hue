@@ -633,6 +633,10 @@
         }
         if (data.status == 0) {
           self.result.handle(data.handle);
+          if(data.handle && data.handle.result && data.handle.result.startTime){
+	    self.result.startTime(new Date(data.handle.result.startTime));
+	    self.result.endTime(new Date(data.handle.result.endTime)); 
+          }
           self.result.hasResultset(data.handle.has_result_set);
           if (data.handle.sync) {
             self.loadData(data.handle, 100);
